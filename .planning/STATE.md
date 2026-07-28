@@ -4,15 +4,15 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 1
 current_phase_name: Infrastructure & Connection Foundation
-status: planning
+status: executing
 stopped_at: Phase 1 context gathered
-last_updated: "2026-07-28T19:47:42.149Z"
+last_updated: "2026-07-28T23:01:07.519Z"
 last_activity: 2026-07-27
 last_activity_desc: ROADMAP.md created, 13/13 v1 requirements mapped across 4 phases
 progress:
   total_phases: 1
   completed_phases: 0
-  total_plans: 0
+  total_plans: 4
   completed_plans: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 Phase: 1 of 4 (Infrastructure & Connection Foundation)
 Plan: 0 of TBD in current phase
-Status: Ready to plan
+Status: Ready to execute
 Last activity: 2026-07-27 — ROADMAP.md created, 13/13 v1 requirements mapped across 4 phases
 
 Progress: [░░░░░░░░░░] 0%
@@ -73,6 +73,10 @@ None yet.
 
 - Phase 3: Tiny's exact rate-limit numbers (plan-tier thresholds, consecutive-429 lockout duration) are MEDIUM confidence per research/SUMMARY.md — re-verify against ajuda.tiny.com.br / tiny.com.br/api-docs before implementing the rate limiter.
 - Phase 2: Supabase Auth Custom Access Token Hook plan-gating is unresolved in research — not currently a blocker since the recommended approach (request-time tenant lookup) avoids Auth Hooks for MVP.
+
+### Roadmap Evolution
+
+- Phase 1 edited: edited fields: goal, requirements, success_criteria — removed Render/FastAPI/Alembic references, aligned to Supabase Edge Functions + Cron + Queue architecture per 01-CONTEXT.md
 
 ## Deferred Items
 
