@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Infrastructure & Connection Foundation
 status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-07-28T23:13:14.561Z"
+stopped_at: Blocked at 01-01 Task 1 precondition (Supabase project/credentials not provisioned)
+last_updated: "2026-07-28T23:15:50.064Z"
 last_activity: 2026-07-28
 last_activity_desc: Phase 1 execution started
 progress:
@@ -73,6 +73,7 @@ None yet.
 
 - Phase 3: Tiny's exact rate-limit numbers (plan-tier thresholds, consecutive-429 lockout duration) are MEDIUM confidence per research/SUMMARY.md — re-verify against ajuda.tiny.com.br / tiny.com.br/api-docs before implementing the rate limiter.
 - Phase 2: Supabase Auth Custom Access Token Hook plan-gating is unresolved in research — not currently a blocker since the recommended approach (request-time tenant lookup) avoids Auth Hooks for MVP.
+- Plan 01-01 blocked at task 1 precondition: SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF, SUPABASE_DB_PASSWORD, and DATABASE_URL (Transaction Pooler, port 6543) are not set as environment variables. Supabase project provisioning (account/org creation, ToS acceptance, personal access token generation) requires human browser interaction. supabase/deno/gh/docker CLIs are also not installed on this machine. See 01-01-PLAN.md user_setup block for exact steps.
 
 ### Roadmap Evolution
 
@@ -88,6 +89,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T19:47:42.141Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-infrastructure-connection-foundation/01-CONTEXT.md
+Last session: 2026-07-28T23:15:50.054Z
+Stopped at: Blocked at 01-01 Task 1 precondition (Supabase project/credentials not provisioned)
+Resume file: .planning/phases/01-infrastructure-connection-foundation/01-01-PLAN.md
