@@ -24,15 +24,17 @@ The backend's core infrastructure works end-to-end in production before any feat
   - Sources checked: supabase.com/docs/guides/functions/limits, supabase.com/blog/edge-functions-background-tasks-websockets, vercel.com/docs/functions/configuring-functions/duration, vercel.com/docs/cron-jobs.
 
 ### Sync Execution Model
-- **D-03:** The periodic product sync must be **designed in batches/pages per invocation** (not one long-running loop) so each Edge Function call fits inside the 150-second free-tier background task ceiling, regardless of tenant catalog size. — **Reversibility:** costly — affects the Phase 3 sync engine's core control flow (batch cursor / continuation state); redesigning after Phase 3 ships means reworking the sync loop and its idempotency/resume logic.
+- **D-03:** The periodic product sync uses the **Cron + Edge Function (enqueue) + Supabase Queue (pgmq) + Edge Function (worker)** pattern — Supabase's own documented architecture for exactly this constraint set, not ad-hoc pagination. Flow: (1) `pg_cron` triggers an "enqueue" Edge Function on schedule; (2) that function breaks the sync into small work items (e.g., one page of products per item) and publishes each to a Supabase Queue; (3) "worker" Edge Function(s) consume the queue and process one item at a time. No single invocation may do heavy/long processing — every unit of work must fit inside the **2-second CPU time cap** and the **400-second max worker wall-clock time** (per user-provided figures; free-tier background tasks are capped lower, at 150s — verify the exact free-tier worker-duration figure during research since it may differ from the 400s paid figure). — **Reversibility:** costly — affects the Phase 3 sync engine's core control flow (queue message shape, worker idempotency, retry/dead-letter handling); redesigning after Phase 3 ships means reworking the sync pipeline end to end.
+- **Rationale (user-provided constraints):** no heavy processing per call; large jobs (e.g., big product catalogs) must be broken into smaller chunks; the Cron+Queue+Edge-Function combination is the explicit architecture pattern requested, matching Supabase's own "Processing large jobs with Edge Functions, Cron, and Queues" guidance (verified during discussion — `pgmq`-based Queues is a real, documented Supabase feature, not a custom build).
 
 ### Scheduler
-- **D-04:** Use **Supabase Cron (pg_cron/pg_net)**, running inside the Supabase Postgres instance, to invoke the sync Edge Function on a schedule — replaces the originally planned in-process APScheduler (which required a persistent Python process). — **Reversibility:** reversible — swapping the trigger mechanism (e.g., to an external cron service) later doesn't require touching the sync function's own logic, only how it's invoked.
+- **D-04:** Use **Supabase Cron (pg_cron/pg_net)**, running inside the Supabase Postgres instance, to invoke the enqueue Edge Function on a schedule (see D-03) — replaces the originally planned in-process APScheduler (which required a persistent Python process). — **Reversibility:** reversible — swapping the trigger mechanism (e.g., to an external cron service) later doesn't require touching the sync function's own logic, only how it's invoked.
 
 ### Realtime (Supabase)
 - **D-05:** Supabase Realtime is **not used in this phase or the MVP**. The user noticed it's available but is not requesting it now. `REQUIREMENTS.md`'s existing Out-of-Scope entry ("Real-time via websocket") stays as-is — webhook + polling remains the sync-freshness mechanism.
 
 ### Claude's Discretion
+- **Work-item granularity:** exact size of each queued unit of work (e.g., how many products per page/item) — implementation detail for planning, bounded by the 2s CPU / worker-duration caps above.
 - **Migration tooling:** Alembic was Python-specific and no longer fits a TypeScript/Deno backend. Research/planning should choose a replacement (e.g., Supabase CLI's native `supabase migration` SQL-based workflow is the most natural fit for this stack, but confirm during research).
 - **Postgres driver/connection method from Deno Edge Functions:** must be re-verified against Supabase's pooler guidance for the new runtime. This is the same bug class that caused a production incident in the prior `tinysaas` project (commit `55b0f80`) — the specific driver changes (no more psycopg3), but the underlying pooler-username/connection-string risk (`docs` warn against reconstructing `DATABASE_URL` from parts) still applies and must be re-validated for whatever Deno Postgres client is chosen.
 - **Health-check shape:** the exact form of "backend responds to a health-check request" (ROADMAP success criterion) is unchanged in intent, just needs re-expressing as an Edge Function endpoint instead of a FastAPI route — implementation detail for planning.
@@ -48,6 +50,11 @@ The backend's core infrastructure works end-to-end in production before any feat
 - `docs/01-ARQUITETURA.md` — backend language/framework/hosting sections (Python/FastAPI/Render) are **superseded** by D-01/D-02 above. Data model, multi-tenancy (RLS), and Tiny ERP integration sections remain valid.
 - `docs/04-INFRAESTRUTURA-DEPLOY.md` — Render-specific deployment guidance is **superseded**. Supabase/Vercel-specific deployment sections remain relevant where not Render-dependent.
 - `.claude/CLAUDE.md` — the "Technology Stack" table (FastAPI, SQLAlchemy, Alembic, psycopg, APScheduler, Render) reflects the **pre-pivot** research and is now stale for the backend runtime. It should be refreshed after Phase 1 research/planning confirms the new stack's specifics (recommended follow-up, not part of this phase's plan itself).
+
+### External (Supabase official docs — pattern reference for D-03)
+- `supabase.com/docs/guides/queues` — Supabase Queues (pgmq-based), the queue mechanism D-03 relies on.
+- `supabase.com/blog/processing-large-jobs-with-edge-functions` — official Cron + Edge Functions + Queues pattern for large/chunked jobs; the architecture D-03 follows.
+- `supabase.com/docs/guides/functions/schedule-functions` — Edge Function scheduling via pg_cron/pg_net.
 
 ### Still authoritative
 - `.planning/PROJECT.md` — Key Decisions table row "Hosting do backend a decidir na fase de infraestrutura" is resolved by D-01/D-02 (was `Pending`).

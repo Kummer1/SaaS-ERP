@@ -67,8 +67,26 @@ Follow-up: whether "Functions em Python" on Supabase was confirmed. User's actua
 
 ---
 
+## Sync Execution Model — Follow-up Refinement (same session, later message)
+
+User returned with explicit structural constraints from their own research: worker active up to 400s, max CPU time 2s per request, no heavy processing per call, and product pagination should be broken into smaller chunks combining Edge Function + Queues + Cron.
+
+Claude verified via WebSearch that Supabase Queues (pgmq-based) combined with Cron + Edge Functions is a real, officially documented pattern for exactly this constraint set (not a custom build).
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Cron → Edge Function (enqueue) → Supabase Queue (pgmq) → Edge Function (worker) | Official Supabase pattern for chunked background jobs | ✓ |
+| Só Cron + paginação, sem fila formal | Simpler, no pgmq dependency | |
+| Deixa eu explicar diferente | Freeform | |
+
+**User's choice:** Cron + Edge Function (enqueue) + Supabase Queue (pgmq) + Edge Function (worker) — updates D-03 and D-04 in CONTEXT.md accordingly.
+**Notes:** This refines (does not replace) the original "paginate in batches" decision from the same session — same intent, now with the specific mechanism locked.
+
+---
+
 ## Claude's Discretion
 
+- Work-item granularity (how many products per queued item) — bounded by the CPU/duration caps, left to planning.
 - Migration tooling to replace Alembic (Python-specific) — candidate: Supabase CLI native migrations, to confirm during research.
 - Postgres driver/connection method from Deno Edge Functions, and re-validation of pooler/connection-string risk (same bug class as the prior `tinysaas` production incident, commit `55b0f80`) under the new runtime.
 - Exact shape of the "backend health-check" success criterion re-expressed as an Edge Function endpoint.
