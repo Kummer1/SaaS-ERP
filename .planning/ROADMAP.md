@@ -2,10 +2,11 @@
 
 ## Overview
 
-The journey starts with a boring but non-negotiable foundation: a FastAPI backend deployed on
-Render, wired to Supabase Postgres through the exact driver/pooler combination that already broke
-the prior `tinysaas` project once (see commit `55b0f80`), with migrations and a keep-alive cron
-proven working end-to-end before any feature code exists. On top of that, tenant identity and
+The journey starts with a boring but non-negotiable foundation: TypeScript/JavaScript Edge
+Functions deployed on Supabase, wired to Supabase Postgres through a verified connection method
+that avoids the exact pooler/driver bug class that already broke the prior `tinysaas` project once
+(see commit `55b0f80`), with migrations and a Cron + Queue sync-trigger pipeline proven working
+end-to-end before any feature code exists. On top of that, tenant identity and
 isolation go in — Supabase Auth for signup/login, and `tenant_id` + Postgres RLS enforced and
 tested with a cross-tenant access test from the very first tenant, never retrofitted. With
 identity and isolation solid, the core value proposition gets built: a tenant connects their Tiny
@@ -23,7 +24,7 @@ before any expansion to more tenants or more resources.
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Infrastructure & Connection Foundation** - Backend deployed on Render, connected to Supabase Postgres via the correct driver/pooler, migrations and keep-alive cron proven working
+- [ ] **Phase 1: Infrastructure & Connection Foundation** - Backend deployed as Supabase Edge Functions, connected to Supabase Postgres via a verified connection method, migrations and Cron + Queue sync pipeline proven working
 - [ ] **Phase 2: Auth & Multi-Tenant Foundation** - Tenants sign up/log in via Supabase Auth, with tenant isolation (`tenant_id` + RLS) enforced and tested from day one
 - [ ] **Phase 3: Tiny OAuth2 Connect + Sync Engine (Products)** - Tenant connects their Tiny ERP account and products sync idempotently on an automatic, rate-limit-aware schedule
 - [ ] **Phase 4: Dashboard (Product List, Stock Value, Low-Stock, Sync Status)** - Tenant sees synced products, stock value, low-stock indicator, and sync health in a dashboard
@@ -31,16 +32,22 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Infrastructure & Connection Foundation
-**Goal**: The backend's core infrastructure works end-to-end in production — FastAPI deployed on Render, connected to Supabase Postgres through the correct driver/pooler combination, with Alembic migrations and a keep-alive cron configured — before any feature code exists.
+**Goal**: The backend's core infrastructure works end-to-end in production — TypeScript/JavaScript Edge Functions deployed on Supabase, connected to Supabase Postgres via a verified connection method, with schema migrations and a Cron + Queue sync-trigger pipeline configured — before any feature code exists.
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
-**Requirements**: None directly — this phase de-risks the DATABASE_URL/pooler bug class (already caused a production incident in the prior `tinysaas` project, see commit `55b0f80`) and free-tier scheduler reliability risk that every later phase silently depends on.
+**Requirements**: None directly — this phase de-risks the Postgres pooler/driver-connection bug class (already caused a production incident in the prior `tinysaas` project, see commit `55b0f80`) and validates the Cron + Queue + Edge Function sync-trigger pipeline that every later phase silently depends on.
 **Success Criteria** (what must be TRUE):
-  1. The FastAPI backend responds to a health-check request at its public URL deployed on Render's free tier.
-  2. Alembic migrations run successfully against Supabase Postgres using the correct pooler/driver combination (session pooler + psycopg3 async), both locally and in production.
-  3. A CI smoke test executes `SELECT 1` using exactly the same DATABASE_URL shape used in production, preventing the pooler/driver mismatch that broke the prior project.
-  4. An external keep-alive cron is configured and successfully wakes Render's sleeping free-tier dyno between scheduled hits.
-**Plans**: TBD
+  1. A Supabase Edge Function responds to a health-check request at its public URL.
+  2. Database schema migrations run successfully against Supabase Postgres using the project's chosen migration tool, both locally and in production.
+  3. A CI smoke test executes `SELECT 1` using exactly the same Postgres connection method used in production, preventing the pooler/driver mismatch that broke the prior project.
+  4. Supabase Cron (pg_cron) successfully triggers an Edge Function on schedule, which publishes to a Supabase Queue (pgmq) consumed by a worker Edge Function — proving the Cron + Queue + Edge Function sync pipeline works end-to-end.
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Tracer: Transaction-Pooler Postgres connection + public health-check Edge Function, deployed and verified (SC-1)
+- [ ] 01-02-PLAN.md — Migrations (extensions) + CI smoke test reusing the same production-shape connection (SC-2, SC-3)
+- [ ] 01-03-PLAN.md — Vault secrets + Cron/Queue migration: pg_cron scheduled trigger and the sync_work queue (SC-4, trigger+queue halves)
+- [ ] 01-04-PLAN.md — sync-enqueue + sync-worker Edge Functions, Cron→Queue→Worker pipeline proven end-to-end (SC-4 complete)
 
 ### Phase 2: Auth & Multi-Tenant Foundation
 **Goal**: Users can sign up and log in via Supabase Auth, and tenant isolation (`tenant_id` + Postgres RLS) is enforced and validated before any tenant-scoped data exists in the system.
@@ -87,7 +94,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure & Connection Foundation | 0/TBD | Not started | - |
+| 1. Infrastructure & Connection Foundation | 0/4 | Not started | - |
 | 2. Auth & Multi-Tenant Foundation | 0/TBD | Not started | - |
 | 3. Tiny OAuth2 Connect + Sync Engine (Products) | 0/TBD | Not started | - |
 | 4. Dashboard (Product List, Stock Value, Low-Stock, Sync Status) | 0/TBD | Not started | - |
