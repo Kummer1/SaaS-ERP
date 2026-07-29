@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 1
-current_phase_name: Infrastructure & Connection Foundation
+current_phase: 01
+current_phase_name: infrastructure-connection-foundation
 status: executing
-stopped_at: Blocked at 01-01 Task 1 precondition (Supabase project/credentials not provisioned)
-last_updated: "2026-07-28T23:15:50.064Z"
-last_activity: 2026-07-28
-last_activity_desc: Phase 1 execution started
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-07-29T22:43:47.671Z"
+last_activity: 2026-07-29
+last_activity_desc: Phase 01 execution started
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 4
-  completed_plans: 0
+  completed_plans: 1
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** Um tenant consegue conectar sua conta Tiny ERP e ver, no dashboard, um recurso sincronizado corretamente e de forma confiável.
-**Current focus:** Phase 1 — Infrastructure & Connection Foundation
+**Current focus:** Phase 01 — infrastructure-connection-foundation
 
 ## Current Position
 
-Phase: 1 (Infrastructure & Connection Foundation) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 1
-Last activity: 2026-07-28 — Phase 1 execution started
+Phase: 01 (infrastructure-connection-foundation) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-07-29 — Phase 01 execution started
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 25%
 
 ## Performance Metrics
 
@@ -54,6 +54,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 15min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -64,16 +69,16 @@ Recent decisions affecting current work:
 
 - Roadmap: Phase 1 (Infrastructure) carries zero direct requirement mappings by design — it exists to de-risk the DATABASE_URL/pooler bug class that already broke the prior `tinysaas` project (commit `55b0f80`) and Render free-tier scheduler reliability, both of which every later phase silently depends on.
 - Roadmap: SYNC-03 ("tenant vê última sincronização e status de saúde") mapped to Phase 4 (Dashboard), not Phase 3 (Sync Engine) — the requirement is about the tenant *seeing* sync status in the UI, which belongs with the dashboard build.
+- [Phase ?]: Corrected DATABASE_URL in .env to the Transaction Pooler connection string (port 6543, postgres.<ref> user) via the Supabase Management API - it previously held the direct-connection string, which would have broken this phase's core connection-safety claim
 
 ### Pending Todos
 
-- **Human action required:** Run `supabase login` (browser-based OAuth device flow — Claude cannot perform this) followed by `supabase link --project-ref <SUPABASE_PROJECT_REF>` to link the local project. Precondition: provision a Supabase project (or have an existing one) with `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, and `SUPABASE_DB_PASSWORD` available, and install the `supabase` CLI locally (not currently installed on this machine). This unblocks Plan 01-01 Task 1's precondition in Phase 1 (Infrastructure & Connection Foundation) — see the "Plan 01-01 blocked at task 1 precondition..." entry under Blockers/Concerns below for full detail.
+*(none currently — supabase login/link completed during 01-01 execution)*
 
 ### Blockers/Concerns
 
 - Phase 3: Tiny's exact rate-limit numbers (plan-tier thresholds, consecutive-429 lockout duration) are MEDIUM confidence per research/SUMMARY.md — re-verify against ajuda.tiny.com.br / tiny.com.br/api-docs before implementing the rate limiter.
 - Phase 2: Supabase Auth Custom Access Token Hook plan-gating is unresolved in research — not currently a blocker since the recommended approach (request-time tenant lookup) avoids Auth Hooks for MVP.
-- Plan 01-01 blocked at task 1 precondition: SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF, SUPABASE_DB_PASSWORD, and DATABASE_URL (Transaction Pooler, port 6543) are not set as environment variables. Supabase project provisioning (account/org creation, ToS acceptance, personal access token generation) requires human browser interaction. supabase/deno/gh/docker CLIs are also not installed on this machine. See 01-01-PLAN.md user_setup block for exact steps.
 
 ### Quick Tasks Completed
 
@@ -95,6 +100,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T23:15:50.054Z
-Stopped at: Blocked at 01-01 Task 1 precondition (Supabase project/credentials not provisioned)
-Resume file: .planning/phases/01-infrastructure-connection-foundation/01-01-PLAN.md
+Last session: 2026-07-29T22:43:47.660Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
