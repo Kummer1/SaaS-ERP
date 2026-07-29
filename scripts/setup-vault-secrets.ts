@@ -24,7 +24,12 @@
 import postgres from "npm:postgres@3.4.9";
 
 const connectionString =
-  Deno.env.get("DATABASE_URL") ?? Deno.env.get("SUPABASE_DB_URL")!;
+  Deno.env.get("DATABASE_URL") ?? Deno.env.get("SUPABASE_DB_URL");
+if (!connectionString) {
+  throw new Error(
+    "DATABASE_URL or SUPABASE_DB_URL environment variable is required and unset",
+  );
+}
 
 const projectUrl = Deno.env.get("SUPABASE_URL");
 const edgeFunctionKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
