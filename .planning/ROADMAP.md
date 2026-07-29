@@ -45,7 +45,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A CI smoke test executes `SELECT 1` using exactly the same Postgres connection method used in production, preventing the pooler/driver mismatch that broke the prior project.
   4. Supabase Cron (pg_cron) successfully triggers an Edge Function on schedule, which publishes to a Supabase Queue (pgmq) consumed by a worker Edge Function — proving the Cron + Queue + Edge Function sync pipeline works end-to-end.
 
-**Plans**: 1/4 plans executed
+**Plans**: 2/4 plans executed
 
 Plans:
 **Wave 1**
@@ -54,7 +54,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Migrations (extensions) + CI smoke test reusing the same production-shape connection (SC-2, SC-3)
+- [x] 01-02-PLAN.md — Migrations (extensions) + CI smoke test reusing the same production-shape connection (SC-2, SC-3)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure & Connection Foundation | 1/4 | In Progress|  |
+| 1. Infrastructure & Connection Foundation | 2/4 | In Progress|  |
 | 2. Auth & Multi-Tenant Foundation | 0/TBD | Not started | - |
 | 3. Tiny OAuth2 Connect + Sync Engine (Products) | 0/TBD | Not started | - |
 | 4. Dashboard (Product List, Stock Value, Low-Stock, Sync Status) | 0/TBD | Not started | - |
