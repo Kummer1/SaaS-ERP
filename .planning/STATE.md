@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: infrastructure-connection-foundation
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-07-29T23:00:28.769Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-07-29T23:20:13.653Z"
 last_activity: 2026-07-29
 last_activity_desc: Phase 01 execution started
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 ## Current Position
 
 Phase: 01 (infrastructure-connection-foundation) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-07-29 — Phase 01 execution started
 
-Progress: [█████░░░░░] 50%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [█████░░░░░] 50%
 |------|----------|-------|-------|
 | Phase 01 P01 | 15min | 2 tasks | 9 files |
 | Phase 01 P02 | 16min | 2 tasks | 2 files |
+| Phase 01 P03 | 10min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Corrected DATABASE_URL in .env to the Transaction Pooler connection string (port 6543, postgres.<ref> user) via the Supabase Management API - it previously held the direct-connection string, which would have broken this phase's core connection-safety claim
 - [Phase ?]: Repaired a pre-existing orphaned remote migration-history entry (20260729003512_init_schema, real tenants/users/tiny_credentials tables) via supabase migration repair --status reverted - metadata-only, no schema/data touched - to unblock plan 01-02's db push
 - [Phase ?]: Docker absent locally (confirmed); used supabase db push --dry-run as the pre-production check for the extensions migration instead of local emulation
+- [Phase ?]: Reused the exact postgres.js Transaction-Pooler + {prepare:false} client construction in scripts/setup-vault-secrets.ts, keeping one connection discipline across every script in the project.
+- [Phase ?]: vault.create_secret(value, name) argument order followed the plan's own SQL example exactly - matches Supabase's documented function signature.
 
 ### Pending Todos
 
@@ -104,6 +107,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-29T23:00:28.759Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-07-29T23:20:13.643Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
