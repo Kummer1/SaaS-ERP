@@ -20,7 +20,19 @@
 //
 // Idempotency: for each secret name, checks whether a row already exists
 // in vault.decrypted_secrets before calling vault.create_secret(), so
-// re-running this script never creates duplicate secrets.
+// re-running this script sequentially never creates duplicate secrets.
+//
+// NOT SAFE FOR CONCURRENT EXECUTION: the check-then-insert in ensureSecret()
+// below is not atomic (no transaction/locking). If two invocations of this
+// script ever run at the same time (e.g. two CI jobs, or a retry racing the
+// first attempt), both can pass the "does it exist" check before either
+// inserts, producing duplicate project_url/edge_function_key secrets. The
+// cron migration's net.http_post call reads
+// `(select decrypted_secret from vault.decrypted_secrets where name = ...)`
+// with no `limit 1`/ordering, so a duplicate makes which value is picked
+// non-deterministic. This is a manual, one-time setup script — run it by
+// hand, one invocation at a time, and never wire it into a job that could
+// execute it in parallel with itself.
 import postgres from "npm:postgres@3.4.9";
 
 const connectionString =
@@ -45,6 +57,8 @@ if (!edgeFunctionKey) {
 
 const sql = postgres(connectionString, { prepare: false });
 
+// Not atomic — see the "NOT SAFE FOR CONCURRENT EXECUTION" note at the top
+// of this file. Do not call this from more than one concurrent process.
 async function ensureSecret(name: string, value: string): Promise<void> {
   const existing = await sql`
     select 1 from vault.decrypted_secrets where name = ${name}
