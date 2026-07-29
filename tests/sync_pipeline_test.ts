@@ -27,8 +27,13 @@ Deno.test("pgmq_public round trip: send increases queue depth by 1, pop drains t
     // this test's own assertions aren't affected by FIFO ordering against a
     // message this test didn't send (pgmq.pop always returns the oldest
     // available message, not necessarily this test's own).
-    while ((await queueDepth(sql)) > 0) {
+    for (let i = 0; i < 100 && (await queueDepth(sql)) > 0; i++) {
       await sql`select * from pgmq_public.pop(${QUEUE})`;
+    }
+    if ((await queueDepth(sql)) > 0) {
+      throw new Error(
+        "failed to drain sync_work queue before test assertions (100 pop iterations exhausted)",
+      );
     }
 
     const depthBefore = await queueDepth(sql);
