@@ -67,7 +67,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- **Human action required:** Run `supabase login` (browser-based OAuth device flow — Claude cannot perform this) followed by `supabase link --project-ref <SUPABASE_PROJECT_REF>` to link the local project. Precondition: provision a Supabase project (or have an existing one) with `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, and `SUPABASE_DB_PASSWORD` available, and install the `supabase` CLI locally (not currently installed on this machine). This unblocks Plan 01-01 Task 1's precondition in Phase 1 (Infrastructure & Connection Foundation) — see the "Plan 01-01 blocked at task 1 precondition..." entry under Blockers/Concerns below for full detail.
 
 ### Blockers/Concerns
 
