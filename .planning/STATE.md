@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 01
 current_phase_name: infrastructure-connection-foundation
-status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-07-29T23:20:13.653Z"
+status: verifying
+stopped_at: Completed 01-04-PLAN.md - Phase 1 fully executed (all 4 plans complete)
+last_updated: "2026-07-29T23:36:06.176Z"
 last_activity: 2026-07-29
 last_activity_desc: Phase 01 execution started
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 Phase: 01 (infrastructure-connection-foundation) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-29 — Phase 01 execution started
 
-Progress: [████████░░] 75%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [████████░░] 75%
 | Phase 01 P01 | 15min | 2 tasks | 9 files |
 | Phase 01 P02 | 16min | 2 tasks | 2 files |
 | Phase 01 P03 | 10min | 2 tasks | 2 files |
+| Phase 01 P04 | 15min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,9 @@ Recent decisions affecting current work:
 - [Phase ?]: Docker absent locally (confirmed); used supabase db push --dry-run as the pre-production check for the extensions migration instead of local emulation
 - [Phase ?]: Reused the exact postgres.js Transaction-Pooler + {prepare:false} client construction in scripts/setup-vault-secrets.ts, keeping one connection discipline across every script in the project.
 - [Phase ?]: vault.create_secret(value, name) argument order followed the plan's own SQL example exactly - matches Supabase's documented function signature.
+- [Phase ?]: Created the missing pgmq_public wrapper schema (send/pop, SECURITY DEFINER, service_role-only grants) via migration - plan 01-02's raw create extension pgmq never auto-provisioned it the way Supabase's dashboard Queues toggle does
+- [Phase ?]: supabase functions invoke/logs are not available subcommands in this project's Supabase CLI (2.110.0) - used authenticated curl POSTs (service-role key as Bearer JWT) for manual Edge Function invocation instead
+- [Phase ?]: Logged an open WINDOWS.md deviation: sync-enqueue-trigger's net.http_post call times out client-side at pg_net's default 5000ms even though the enqueue succeeds server-side, likely Edge Function cold-start latency - flagged for Phase 3, not fixed in this infra-proof plan
 
 ### Pending Todos
 
@@ -107,6 +111,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-29T23:20:13.643Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-07-29T23:36:06.166Z
+Stopped at: Completed 01-04-PLAN.md - Phase 1 fully executed (all 4 plans complete)
 Resume file: None
