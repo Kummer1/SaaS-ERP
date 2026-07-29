@@ -75,6 +75,12 @@ Recent decisions affecting current work:
 - Phase 2: Supabase Auth Custom Access Token Hook plan-gating is unresolved in research — not currently a blocker since the recommended approach (request-time tenant lookup) avoids Auth Hooks for MVP.
 - Plan 01-01 blocked at task 1 precondition: SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF, SUPABASE_DB_PASSWORD, and DATABASE_URL (Transaction Pooler, port 6543) are not set as environment variables. Supabase project provisioning (account/org creation, ToS acceptance, personal access token generation) requires human browser interaction. supabase/deno/gh/docker CLIs are also not installed on this machine. See 01-01-PLAN.md user_setup block for exact steps.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260728-u4u | adicionar fazer autenticação supabase login a lista de tarefas | 2026-07-28 | 08a80e6 | [260728-u4u-adicionar-fazer-autentica-o-supabase-log](./quick/260728-u4u-adicionar-fazer-autentica-o-supabase-log/) |
+
 ### Roadmap Evolution
 
 - Phase 1 edited: edited fields: goal, requirements, success_criteria — removed Render/FastAPI/Alembic references, aligned to Supabase Edge Functions + Cron + Queue architecture per 01-CONTEXT.md
