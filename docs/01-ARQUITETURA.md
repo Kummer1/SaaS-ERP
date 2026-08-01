@@ -89,12 +89,17 @@ Row-Level Security (RLS) fail-closed como camada de defesa.**
 | Banco-por-tenant | Só se cada cliente exigir isolamento físico total — custo operacional alto demais para o estágio atual |
 
 **Padrão fail-closed**: toda policy RLS usa
-`USING (tenant_id = current_setting('app.tenant_id', true)::uuid)`.
+`USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)`.
 O segundo argumento `true` de `current_setting` faz a função retornar `NULL` em vez de
-lançar erro quando a configuração de sessão não foi setada — e `tenant_id = NULL` é
-sempre falso, então **a ausência do `app.tenant_id` nega acesso por padrão**, em vez
-de vazar dados de todos os tenants (o oposto do que aconteceria se a policy
-assumisse "sem tenant setado = acesso livre"). Cada Edge Function seta
+lançar erro quando a configuração de sessão não foi setada — mas sob connection
+pooling a GUC de sessão às vezes resolve para string vazia (`''`) em vez de
+`NULL` (por exemplo após um `RESET` ou troca de conexão de backend no Transaction
+Pooler), e o cast direto `::uuid` de `''` lança erro em vez de negar acesso; por
+isso o `NULLIF(..., '')` normaliza `''` para `NULL` antes do cast — e
+`tenant_id = NULL` é sempre falso, então **a ausência do `app.tenant_id` nega
+acesso por padrão**, em vez de vazar dados de todos os tenants (o oposto do que
+aconteceria se a policy assumisse "sem tenant setado = acesso livre"). Cada
+Edge Function seta
 `SET LOCAL app.tenant_id = '<uuid>'` no início de cada transação, após resolver o
 tenant a partir do usuário autenticado.
 

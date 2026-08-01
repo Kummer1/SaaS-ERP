@@ -122,10 +122,14 @@ erDiagram
   desenho original — não há runtime Python para rodar Fernet, e o padrão Vault já
   está em uso desde a Fase 1 para segredos de plataforma.
 - **RLS fail-closed**: cada tabela de negócio tem uma policy
-  `USING (tenant_id = current_setting('app.tenant_id', true)::uuid)`. O `true` em
-  `current_setting` faz retornar `NULL` (em vez de erro) quando a sessão não setou
-  `app.tenant_id` — e `tenant_id = NULL` é sempre falso, então a ausência da
-  configuração **nega** acesso por padrão. Cada Edge Function faz
+  `USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)`.
+  O `true` em `current_setting` faz retornar `NULL` (em vez de erro) quando a
+  sessão não setou `app.tenant_id` — mas sob connection pooling a GUC também
+  pode resolver para string vazia (`''`), não só ficar totalmente ausente, e
+  o cast direto de `''` para `uuid` lança erro; por isso o cast é envolto em
+  `NULLIF(..., '')`, que normaliza `''` para `NULL` antes de comparar — e
+  `tenant_id = NULL` é sempre falso, então a ausência da configuração **nega**
+  acesso por padrão. Cada Edge Function faz
   `SET LOCAL app.tenant_id = '<uuid>'` no início da transação, após resolver o
   tenant do usuário autenticado via Supabase Auth.
 
