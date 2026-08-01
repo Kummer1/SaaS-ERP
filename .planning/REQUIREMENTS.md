@@ -15,13 +15,13 @@ Requirements for initial release (MVP). Each maps to roadmap phases.
 ### Integração Tiny
 
 - [ ] **TINY-01**: Tenant conecta sua conta Tiny ERP via OAuth2 (authorize → callback → tokens salvos)
-- [ ] **TINY-02**: Tokens Tiny (client_secret, access_token, refresh_token) armazenados criptografados em repouso (Fernet)
+- [ ] **TINY-02**: Tokens Tiny (client_secret, access_token, refresh_token) armazenados criptografados em repouso (Supabase Vault — substitui Fernet do desenho original, sem runtime Python)
 - [ ] **TINY-03**: Tenant vê o status da conexão com o Tiny (conectado/expirado/revogado)
 
 ### Sincronização
 
 - [ ] **SYNC-01**: Sistema sincroniza produtos (SKU, nome, preço, estoque, estoque mínimo) do Tiny ERP de forma idempotente — rodar o mesmo sync duas vezes não duplica nada
-- [ ] **SYNC-02**: Sync roda em agenda (scheduler in-process + gatilho de cron externo), sem exigir ação manual do tenant
+- [ ] **SYNC-02**: Sync roda em agenda (Supabase Cron — `pg_cron` + `pg_net` — disparando Edge Functions), sem exigir ação manual do tenant
 - [ ] **SYNC-03**: Tenant vê "última sincronização" e status de saúde do sync
 - [ ] **SYNC-04**: Sistema respeita o rate limit da Tiny por tenant (backoff em `429`, honra `Retry-After`, evita bloqueio de 1h por 5 respostas 429 seguidas)
 
@@ -101,4 +101,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-07-27*
-*Last updated: 2026-07-27 after roadmap creation*
+*Last updated: 2026-08-01 — wording aligned to Supabase Edge Functions architecture (TINY-02: Vault replaces Fernet; SYNC-02: Supabase Cron replaces in-process scheduler). No requirement scope changed, only mechanism wording.*

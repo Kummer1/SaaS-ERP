@@ -1,5 +1,10 @@
 # Roadmap: Tiny SaaS Platform
 
+> **2026-08-01 — Architecture redefinition confirmed**: platform auth = Supabase
+> Auth nativo; webhook queue mechanism = simple Postgres table with polling
+> (replaces `pgmq`, already implemented in Phase 1 — migration is pending debt,
+> see Phase 3 pre-requisite below). Full architecture in `docs/01-ARQUITETURA.md`.
+
 ## Overview
 
 The journey starts with a boring but non-negotiable foundation: TypeScript/JavaScript Edge
@@ -90,8 +95,10 @@ Plans:
   1. A tenant can connect their Tiny ERP account through a complete OAuth2 flow (authorize → callback → tokens saved), with tokens (client_secret, access_token, refresh_token) stored encrypted at rest via Fernet.
   2. The tenant sees their Tiny connection status (connected/expired/revoked) in the application.
   3. Products sync from Tiny to the platform's own database idempotently — running the same sync twice does not duplicate records.
-  4. Sync runs automatically on a schedule (in-process scheduler + external cron trigger), without requiring manual action from the tenant.
-  5. The system respects Tiny's rate limit — applies backoff on `429` responses, honors `Retry-After`, and avoids the 1-hour lockout triggered by 5 consecutive 429s.
+  4. Sync runs automatically on a schedule (Supabase Cron — `pg_cron` + `pg_net` — triggering Edge Functions), without requiring manual action from the tenant.
+  5. The system respects Tiny's rate limit — applies backoff on `429` responses, honors `Retry-After`, and avoids the 1-hour lockout triggered by 5 consecutive 429s. Rate-limit state persisted in a Postgres table (Edge Functions are stateless between invocations).
+
+**Pre-requisite (architecture decision, 2026-08-01)**: migrate the webhook queue mechanism from `pgmq` (implemented and verified in Phase 1) to a simple Postgres table with polling, per the confirmed architecture decision — see `PROJECT.md` Key Decisions and `docs/02-MODELO-DE-DADOS.md` §5.
 
 **Plans**: TBD
 

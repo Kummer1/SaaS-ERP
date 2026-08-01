@@ -70,6 +70,7 @@ Progress: [██████████] 100%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- 2026-08-01: Architecture redefinition session — rewrote `docs/01-05*.md`, `PROJECT.md`, `REQUIREMENTS.md` wording, `ROADMAP.md`, and `.claude/CLAUDE.md` to reflect the Supabase Edge Functions + Vercel architecture (code had already moved ahead of docs during Phase 1). Confirmed 2 previously-open decisions with the user: (1) Supabase Auth nativo for platform auth, confirming what PROJECT.md/REQUIREMENTS.md already assumed; (2) webhook queue = simple Postgres table with polling, **overriding** the `pgmq` implementation already built and verified in Phase 1 — this is now declared technical debt, see Pending Todos below.
 - Roadmap: Phase 1 (Infrastructure) carries zero direct requirement mappings by design — it exists to de-risk the DATABASE_URL/pooler bug class that already broke the prior `tinysaas` project (commit `55b0f80`) and Render free-tier scheduler reliability, both of which every later phase silently depends on.
 - Roadmap: SYNC-03 ("tenant vê última sincronização e status de saúde") mapped to Phase 4 (Dashboard), not Phase 3 (Sync Engine) — the requirement is about the tenant *seeing* sync status in the UI, which belongs with the dashboard build.
 - [Phase ?]: Corrected DATABASE_URL in .env to the Transaction Pooler connection string (port 6543, postgres.<ref> user) via the Supabase Management API - it previously held the direct-connection string, which would have broken this phase's core connection-safety claim
@@ -83,7 +84,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-*(none currently — supabase login/link completed during 01-01 execution)*
+- Migrate the webhook queue mechanism from `pgmq` (extension + `pgmq_public` wrapper schema + `sync_work` queue, built and verified in Phase 1) to a simple Postgres table with polling, per the architecture decision confirmed 2026-08-01. Must happen before Phase 3 (sync engine) starts depending on the queue. See `PROJECT.md` Key Decisions and `docs/02-MODELO-DE-DADOS.md` §5 for the target table shape.
 
 ### Blockers/Concerns
 
@@ -100,6 +101,7 @@ Recent decisions affecting current work:
 ### Roadmap Evolution
 
 - Phase 1 edited: edited fields: goal, requirements, success_criteria — removed Render/FastAPI/Alembic references, aligned to Supabase Edge Functions + Cron + Queue architecture per 01-CONTEXT.md
+- 2026-08-01: Phase 3 edited — success criterion 4 wording aligned to Supabase Cron (was "in-process scheduler + external cron trigger"); added pre-requisite note about the pending pgmq → simple-table queue migration decided this session
 
 ## Deferred Items
 
