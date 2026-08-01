@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: infrastructure-connection-foundation
 status: verifying
-stopped_at: Completed 01-04-PLAN.md - Phase 1 fully executed (all 4 plans complete)
-last_updated: "2026-07-29T23:36:06.176Z"
+stopped_at: Completed quick task 260801-sg0 (RLS tenant_id cast fix) - migration authored, live push deferred pending user go-ahead
+last_updated: "2026-08-01T23:49:32.578Z"
 last_activity: 2026-07-29
 last_activity_desc: Phase 01 execution started
 progress:
@@ -81,10 +81,12 @@ Recent decisions affecting current work:
 - [Phase ?]: Created the missing pgmq_public wrapper schema (send/pop, SECURITY DEFINER, service_role-only grants) via migration - plan 01-02's raw create extension pgmq never auto-provisioned it the way Supabase's dashboard Queues toggle does
 - [Phase ?]: supabase functions invoke/logs are not available subcommands in this project's Supabase CLI (2.110.0) - used authenticated curl POSTs (service-role key as Bearer JWT) for manual Edge Function invocation instead
 - [Phase ?]: Logged an open WINDOWS.md deviation: sync-enqueue-trigger's net.http_post call times out client-side at pg_net's default 5000ms even though the enqueue succeeds server-side, likely Edge Function cold-start latency - flagged for Phase 3, not fixed in this infra-proof plan
+- [Phase ?]: 2026-08-01 (quick-260801-sg0): Fixed RLS tenant_id cast bug (nullif-wrapped), added FORCE ROW LEVEL SECURITY and authenticated SELECT grants on tenants/users/tiny_credentials via new corrective migration 20260801234106; live db push and live verification deferred pending explicit user go-ahead (see .planning/quick/260801-sg0-.../260801-sg0-SUMMARY.md)
 
 ### Pending Todos
 
 - Migrate the webhook queue mechanism from `pgmq` (extension + `pgmq_public` wrapper schema + `sync_work` queue, built and verified in Phase 1) to a simple Postgres table with polling, per the architecture decision confirmed 2026-08-01. Must happen before Phase 3 (sync engine) starts depending on the queue. See `PROJECT.md` Key Decisions and `docs/02-MODELO-DE-DADOS.md` §5 for the target table shape.
+- Push the RLS tenant_id fix migration to the live project (deferred from quick task 260801-sg0 pending explicit go-ahead): run `supabase db push` then `deno run --allow-net --allow-env scripts/verify-rls-tenant-fix.ts`. Migration file (`supabase/migrations/20260801234106_fix_rls_tenant_id_cast_and_grants.sql`) and verify script are ready and dry-run/typecheck-verified. Should happen before Phase 2 (auth) relies on `authenticated` reading `tenants`/`users`/`tiny_credentials`.
 
 ### Blockers/Concerns
 
@@ -97,6 +99,7 @@ Recent decisions affecting current work:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260728-u4u | adicionar fazer autenticação supabase login a lista de tarefas | 2026-07-28 | 08a80e6 | [260728-u4u-adicionar-fazer-autentica-o-supabase-log](./quick/260728-u4u-adicionar-fazer-autentica-o-supabase-log/) |
+| 260801-sg0 | fix RLS tenant_id cast, add FORCE RLS, authenticated grants (migration authored, live push deferred pending go-ahead) | 2026-08-01 | 9a5e9bb | [260801-sg0-fix-rls-tenant-id-cast-replace-current-s](./quick/260801-sg0-fix-rls-tenant-id-cast-replace-current-s/) |
 
 ### Roadmap Evolution
 
@@ -113,6 +116,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-29T23:36:06.166Z
-Stopped at: Completed 01-04-PLAN.md - Phase 1 fully executed (all 4 plans complete)
+Last session: 2026-08-01T23:49:32.565Z
+Stopped at: Completed quick task 260801-sg0 (RLS tenant_id cast fix) - migration authored, live push deferred pending user go-ahead
 Resume file: None
