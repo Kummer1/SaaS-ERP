@@ -401,6 +401,14 @@ verify_jwt = false
 [functions.tiny-mock-token]
 verify_jwt = false
 
+# MOCK (quick-260802-hvz) — simulates the real Tiny /produtos v3 endpoint.
+# This endpoint plays the role of the real Tiny API, which authenticates via
+# the tenant's own Tiny access token (an opaque mock string here), never a
+# Supabase-signed JWT — identical rationale to tiny-mock-authorize/
+# tiny-mock-token above.
+[functions.tiny-mock-produtos]
+verify_jwt = false
+
 # Public OAuth2 redirect target by construction: the browser lands here from
 # Tiny's server with only `code`/`state` in the query string, no JWT possible.
 # Security is the `state` anti-CSRF check, not auth — see
