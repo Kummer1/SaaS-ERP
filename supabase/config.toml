@@ -384,9 +384,36 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# Public, unauthenticated health-check endpoint. This is the ONLY function in Phase 1
-# allowed verify_jwt = false — every other function stays protected by the default.
+# Public, unauthenticated health-check endpoint. Phase 1's only verify_jwt = false
+# exception — every OTHER function stays protected by the default UNLESS it has its
+# own explicit, commented override below (see the Tiny OAuth mock-flow functions,
+# quick-260802-oauth-mock).
 [functions.health]
+verify_jwt = false
+
+# MOCK — simulates an external OAuth provider (Tiny), which never carries our
+# Supabase Auth JWT. Not part of the real Tiny integration; see
+# supabase/functions/tiny-mock-authorize/index.ts.
+[functions.tiny-mock-authorize]
+verify_jwt = false
+
+# MOCK — see tiny-mock-authorize above.
+[functions.tiny-mock-token]
+verify_jwt = false
+
+# Public OAuth2 redirect target by construction: the browser lands here from
+# Tiny's server with only `code`/`state` in the query string, no JWT possible.
+# Security is the `state` anti-CSRF check, not auth — see
+# supabase/functions/tiny-oauth-callback/index.ts.
+[functions.tiny-oauth-callback]
+verify_jwt = false
+
+# KNOWN SCOPE GAP (quick-260802-oauth-mock): tenant_id is currently trusted
+# from a query param because no dashboard "connect" button exists yet to
+# originate an authenticated call. This MUST move to the default (protected)
+# once tiny-oauth-authorize derives tenant_id from a real Supabase Auth
+# session instead — see supabase/functions/tiny-oauth-authorize/index.ts.
+[functions.tiny-oauth-authorize]
 verify_jwt = false
 
 # [edge_runtime.secrets]

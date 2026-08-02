@@ -1,0 +1,1 @@
+RESET app.tenant_id;

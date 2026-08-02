@@ -5,10 +5,10 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: infrastructure-connection-foundation
 status: verifying
-stopped_at: Completed quick task 260801-tef - local RLS proof passed, live push succeeded, final live-verify script blocked by pre-existing DATABASE_URL credential issue
-last_updated: "2026-08-02T00:33:33Z"
-last_activity: 2026-07-29
-last_activity_desc: Phase 01 execution started
+stopped_at: Completed quick task 260802-oam - mocked Tiny OAuth2 connect flow proven end-to-end locally (code exchange, anti-CSRF state, Vault encryption, tiny_credentials storage); real Tiny API validation still pending
+last_updated: "2026-08-02T04:20:00Z"
+last_activity: 2026-08-02
+last_activity_desc: Completed quick task 260802-oam - mocked Tiny OAuth2 connect flow
 progress:
   total_phases: 1
   completed_phases: 1
@@ -83,12 +83,17 @@ Recent decisions affecting current work:
 - [Phase ?]: Logged an open WINDOWS.md deviation: sync-enqueue-trigger's net.http_post call times out client-side at pg_net's default 5000ms even though the enqueue succeeds server-side, likely Edge Function cold-start latency - flagged for Phase 3, not fixed in this infra-proof plan
 - [Phase ?]: 2026-08-01 (quick-260801-sg0): Fixed RLS tenant_id cast bug (nullif-wrapped), added FORCE ROW LEVEL SECURITY and authenticated SELECT grants on tenants/users/tiny_credentials via new corrective migration 20260801234106; live db push and live verification deferred pending explicit user go-ahead (see .planning/quick/260801-sg0-.../260801-sg0-SUMMARY.md)
 - 2026-08-02 (quick-260801-tef): Added scripts/verify-rls-local-isolation.ts, ran supabase db reset locally, and proved the tenant_id cast fix works against a real running Postgres instance (two-tenant isolation + RESET/empty-string fail-closed, zero cross-tenant leakage, no cast error) - see .planning/quick/260801-tef-.../260801-tef-SUMMARY.md. That local pass gated a successful live supabase db push (20260801234106_fix_rls_tenant_id_cast_and_grants.sql applied to production with no errors). Final live confirmation via scripts/verify-rls-tenant-fix.ts could not complete: DATABASE_URL in .env currently fails Postgres password auth for every script that reads it (confirmed pre-existing/environment-wide, not caused by this task, by reproducing the identical failure on the untouched scripts/smoke-test-db.ts) - executor has no permission to read/edit .env in this environment.
+- 2026-08-02 (quick-260802-oam): Built a mocked Tiny OAuth2 connect flow (tiny-mock-authorize/tiny-mock-token simulating Tiny's OAuth server, tiny-oauth-authorize/tiny-oauth-callback as the real production logic) to unblock Phase 3 prep before a real Tiny client_id/client_secret exists (friend's account plan confirmation pending). Confirmed encryption backend = Supabase Vault explicitly with the user (was already the project's documented decision, just unimplemented). Proved end-to-end locally: code exchange, anti-CSRF state (single-use, replay-rejected), Vault encryption round-trip, tiny_credentials storage, and authorization-code single-use - see .planning/quick/260802-oam-.../260802-oam-SUMMARY.md. Known gap, documented in code: tiny-oauth-authorize trusts tenant_id from a query param (no dashboard/session exists yet to derive it from Supabase Auth) - must be fixed before production use.
 
 ### Pending Todos
 
 - Migrate the webhook queue mechanism from `pgmq` (extension + `pgmq_public` wrapper schema + `sync_work` queue, built and verified in Phase 1) to a simple Postgres table with polling, per the architecture decision confirmed 2026-08-01. Must happen before Phase 3 (sync engine) starts depending on the queue. See `PROJECT.md` Key Decisions and `docs/02-MODELO-DE-DADOS.md` §5 for the target table shape.
 - ~~Push the RLS tenant_id fix migration to the live project~~ — DONE 2026-08-02 (quick-260801-tef): `supabase db push` applied `20260801234106_fix_rls_tenant_id_cast_and_grants.sql` live with no errors, gated on a full local pass (real freshly-reset Postgres instance, not just SQL text inspection). See `.planning/quick/260801-tef-.../260801-tef-SUMMARY.md`.
 - Fix `DATABASE_URL` credential in `.env` (Transaction Pooler connection string currently fails Postgres password auth — `password authentication failed for user "postgres"` — for every script that reads it, confirmed pre-existing/environment-wide via `scripts/smoke-test-db.ts`, not caused by any recent quick task). After fixing, re-run `deno run --allow-net --allow-env scripts/verify-rls-tenant-fix.ts` from the repo root to close out live confirmation of the RLS fix (migration is already applied live; only the read-only confirmation step is outstanding). Get the correct password/connection string from the Supabase dashboard, not reconstructed from parts (see "What NOT to Use" in PROJECT.md re: the prior `tinysaas` DATABASE_URL incident).
+- Re-run the Tiny OAuth2 connect flow (quick-260802-oam) against the **real** Tiny OAuth server once a real `client_id`/`client_secret` exists (pending a friend's Tiny account plan confirmation) — the mocked version only proves our client-side logic, not the real Tiny API contract. This is required before Phase 3's "tenant can connect their Tiny ERP account" success criterion can be considered met.
+- Wire `tiny-oauth-authorize`'s `tenant_id` to a real Supabase Auth session instead of a trusted query param (currently `verify_jwt=false`, documented as a known gap in the function and in `config.toml`) — needed once the dashboard "connect" button exists, and before this endpoint is production-safe.
+- Decide a Vault-secret rotation strategy for `tiny_credentials` reconnects — the current mocked-flow implementation creates fresh Vault secrets on every successful callback rather than rotating existing ones in place, orphaning old secrets in `vault.secrets` on reconnect.
+- Minor doc staleness: `ROADMAP.md` line 95 still says Tiny tokens are "stored encrypted at rest via Fernet" — predates the Supabase Vault decision already recorded in `PROJECT.md`/`docs/01-ARQUITETURA.md`/`docs/02-MODELO-DE-DADOS.md`. Not fixed this session (out of scope), just noted.
 
 ### Blockers/Concerns
 
@@ -104,6 +109,7 @@ Recent decisions affecting current work:
 | 260728-u4u | adicionar fazer autenticação supabase login a lista de tarefas | 2026-07-28 | 08a80e6 | [260728-u4u-adicionar-fazer-autentica-o-supabase-log](./quick/260728-u4u-adicionar-fazer-autentica-o-supabase-log/) |
 | 260801-sg0 | fix RLS tenant_id cast, add FORCE RLS, authenticated grants (migration authored, live push deferred pending go-ahead) | 2026-08-01 | 9a5e9bb | [260801-sg0-fix-rls-tenant-id-cast-replace-current-s](./quick/260801-sg0-fix-rls-tenant-id-cast-replace-current-s/) |
 | 260801-tef | prove RLS tenant_id fix locally against real Postgres instance, then push live (migration applied live; final live-verify script blocked by pre-existing DATABASE_URL credential issue) | 2026-08-02 | b3a8b9f | [260801-tef-complete-task-2-rls-tenant-id-cast-force](./quick/260801-tef-complete-task-2-rls-tenant-id-cast-force/) |
+| 260802-oam | mocked Tiny OAuth2 connect flow (authorize/callback + mock Tiny server), proven end-to-end locally: code exchange, anti-CSRF state, Vault encryption, tiny_credentials storage — real Tiny API validation still pending | 2026-08-02 | (pending commit) | [260802-oam-tiny-oauth-mock-flow](./quick/260802-oam-tiny-oauth-mock-flow/) |
 
 ### Roadmap Evolution
 
@@ -120,6 +126,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-02T00:33:33Z
-Stopped at: Completed quick task 260801-tef - local RLS proof passed, live push succeeded, final live-verify script blocked by pre-existing DATABASE_URL credential issue (see Pending Todos)
+Last session: 2026-08-02T04:20:00Z
+Stopped at: Completed quick task 260802-oam - mocked Tiny OAuth2 connect flow proven end-to-end locally; real Tiny API validation still pending a friend's account (see Pending Todos)
 Resume file: None
