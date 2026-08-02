@@ -5,10 +5,10 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: infrastructure-connection-foundation
 status: verifying
-stopped_at: Completed quick task 260802-oam - mocked Tiny OAuth2 connect flow proven end-to-end locally (code exchange, anti-CSRF state, Vault encryption, tiny_credentials storage); real Tiny API validation still pending
-last_updated: "2026-08-02T04:20:00Z"
+stopped_at: Completed quick task 260802-hvz - real sync-enqueue/sync-worker products pipeline proven end-to-end locally (enqueue, watermark suppression, cross-tenant isolation, 401 handling); pgmq vs webhook_queue architecture conflict now needs an explicit human decision
+last_updated: "2026-08-02T16:42:13.532Z"
 last_activity: 2026-08-02
-last_activity_desc: Completed quick task 260802-oam - mocked Tiny OAuth2 connect flow
+last_activity_desc: Completed quick task 260802-hvz - real sync-enqueue/sync-worker products pipeline
 progress:
   total_phases: 1
   completed_phases: 1
@@ -62,6 +62,7 @@ Progress: [██████████] 100%
 | Phase 01 P02 | 16min | 2 tasks | 2 files |
 | Phase 01 P03 | 10min | 2 tasks | 2 files |
 | Phase 01 P04 | 15min | 2 tasks | 6 files |
+| Phase quick-260802-hvz P260802-hvz | 95min | 4 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,7 @@ Recent decisions affecting current work:
 - [Phase ?]: 2026-08-01 (quick-260801-sg0): Fixed RLS tenant_id cast bug (nullif-wrapped), added FORCE ROW LEVEL SECURITY and authenticated SELECT grants on tenants/users/tiny_credentials via new corrective migration 20260801234106; live db push and live verification deferred pending explicit user go-ahead (see .planning/quick/260801-sg0-.../260801-sg0-SUMMARY.md)
 - 2026-08-02 (quick-260801-tef): Added scripts/verify-rls-local-isolation.ts, ran supabase db reset locally, and proved the tenant_id cast fix works against a real running Postgres instance (two-tenant isolation + RESET/empty-string fail-closed, zero cross-tenant leakage, no cast error) - see .planning/quick/260801-tef-.../260801-tef-SUMMARY.md. That local pass gated a successful live supabase db push (20260801234106_fix_rls_tenant_id_cast_and_grants.sql applied to production with no errors). Final live confirmation via scripts/verify-rls-tenant-fix.ts could not complete: DATABASE_URL in .env currently fails Postgres password auth for every script that reads it (confirmed pre-existing/environment-wide, not caused by this task, by reproducing the identical failure on the untouched scripts/smoke-test-db.ts) - executor has no permission to read/edit .env in this environment.
 - 2026-08-02 (quick-260802-oam): Built a mocked Tiny OAuth2 connect flow (tiny-mock-authorize/tiny-mock-token simulating Tiny's OAuth server, tiny-oauth-authorize/tiny-oauth-callback as the real production logic) to unblock Phase 3 prep before a real Tiny client_id/client_secret exists (friend's account plan confirmation pending). Confirmed encryption backend = Supabase Vault explicitly with the user (was already the project's documented decision, just unimplemented). Proved end-to-end locally: code exchange, anti-CSRF state (single-use, replay-rejected), Vault encryption round-trip, tiny_credentials storage, and authorization-code single-use - see .planning/quick/260802-oam-.../260802-oam-SUMMARY.md. Known gap, documented in code: tiny-oauth-authorize trusts tenant_id from a query param (no dashboard/session exists yet to derive it from Supabase Auth) - must be fixed before production use.
+- [Phase ?]: 2026-08-02 (quick-260802-hvz): Built real sync-enqueue/sync-worker products pipeline on pgmq per explicit session brief instruction, deepening the real dependency on pgmq that the 2026-08-01 architecture decision (migrate to a simple webhook_queue table) wanted to avoid creating before Phase 3 depended on it. Flag for user: needs an explicit decision now - (a) reverse the 2026-08-01 decision and keep pgmq permanently, or (b) still migrate pgmq -> webhook_queue as a follow-up, now including this session's real usage. Also decided: sync-enqueue allows duplicate enqueue (no pre-send pending-check) - watermark suppresses post-cycle re-enqueue, in-flight-cycle duplicates are a small, idempotent-absorbed, accepted cost (see 260802-hvz-SUMMARY.md for full rationale).
 
 ### Pending Todos
 
@@ -101,6 +103,7 @@ Recent decisions affecting current work:
 - Phase 2: Supabase Auth Custom Access Token Hook plan-gating is unresolved in research — not currently a blocker since the recommended approach (request-time tenant lookup) avoids Auth Hooks for MVP.
 - No git remote configured on this repo yet, and gh CLI not installed - CI (.github/workflows/ci.yml) has never actually run in GitHub Actions; four repo secrets (DATABASE_URL, SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_ID, SUPABASE_DB_PASSWORD) must be set manually once the repo is pushed to GitHub
 - 2026-08-02 (quick-260801-tef): `.env`'s `DATABASE_URL` currently fails Postgres password authentication (`password authentication failed for user "postgres"`) for every script that reads it - confirmed pre-existing/environment-wide, not caused by this or any recent quick task. Blocks live confirmation of the RLS tenant_id fix (migration is already applied live via `supabase db push`, which authenticates separately via the CLI's own access token). See Pending Todos above for the fix.
+- 2026-08-02 (quick-260802-hvz): pgmq vs. simple-table (webhook_queue) architecture conflict needs an explicit human decision - this session built the real sync-enqueue/sync-worker products pipeline directly on pgmq per explicit brief instruction, deepening the exact dependency the 2026-08-01 decision wanted to avoid before Phase 3 depended on the queue. See 260802-hvz-SUMMARY.md Decisions section for the two options.
 
 ### Quick Tasks Completed
 
@@ -110,6 +113,7 @@ Recent decisions affecting current work:
 | 260801-sg0 | fix RLS tenant_id cast, add FORCE RLS, authenticated grants (migration authored, live push deferred pending go-ahead) | 2026-08-01 | 9a5e9bb | [260801-sg0-fix-rls-tenant-id-cast-replace-current-s](./quick/260801-sg0-fix-rls-tenant-id-cast-replace-current-s/) |
 | 260801-tef | prove RLS tenant_id fix locally against real Postgres instance, then push live (migration applied live; final live-verify script blocked by pre-existing DATABASE_URL credential issue) | 2026-08-02 | b3a8b9f | [260801-tef-complete-task-2-rls-tenant-id-cast-force](./quick/260801-tef-complete-task-2-rls-tenant-id-cast-force/) |
 | 260802-oam | mocked Tiny OAuth2 connect flow (authorize/callback + mock Tiny server), proven end-to-end locally: code exchange, anti-CSRF state, Vault encryption, tiny_credentials storage — real Tiny API validation still pending | 2026-08-02 | (pending commit) | [260802-oam-tiny-oauth-mock-flow](./quick/260802-oam-tiny-oauth-mock-flow/) |
+| 260802-hvz | real sync-enqueue/sync-worker products pipeline (pgmq read+archive, per-tenant Vault token, bronze/silver/watermark, 401→expired), proven end-to-end locally: enqueue, watermark suppression, cross-tenant isolation, 401 path | 2026-08-02 | ecc8632 | [260802-hvz-construir-sync-enqueue-e-sync-worker-pro](./quick/260802-hvz-construir-sync-enqueue-e-sync-worker-pro/) |
 
 ### Roadmap Evolution
 
@@ -126,6 +130,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-02T04:20:00Z
-Stopped at: Completed quick task 260802-oam - mocked Tiny OAuth2 connect flow proven end-to-end locally; real Tiny API validation still pending a friend's account (see Pending Todos)
+Last session: 2026-08-02T16:41:46.156Z
+Stopped at: Completed quick task 260802-hvz - real sync-enqueue/sync-worker products pipeline proven end-to-end locally (enqueue, watermark suppression, cross-tenant isolation, 401 handling); pgmq vs webhook_queue architecture conflict now needs an explicit human decision
 Resume file: None

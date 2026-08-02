@@ -20,8 +20,8 @@ Requirements for initial release (MVP). Each maps to roadmap phases.
 
 ### Sincronização
 
-- [ ] **SYNC-01**: Sistema sincroniza produtos (SKU, nome, preço, estoque, estoque mínimo) do Tiny ERP de forma idempotente — rodar o mesmo sync duas vezes não duplica nada
-- [ ] **SYNC-02**: Sync roda em agenda (Supabase Cron — `pg_cron` + `pg_net` — disparando Edge Functions), sem exigir ação manual do tenant
+- [x] **SYNC-01**: Sistema sincroniza produtos (SKU, nome, preço, estoque, estoque mínimo) do Tiny ERP de forma idempotente — rodar o mesmo sync duas vezes não duplica nada
+- [x] **SYNC-02**: Sync roda em agenda (Supabase Cron — `pg_cron` + `pg_net` — disparando Edge Functions), sem exigir ação manual do tenant
 - [ ] **SYNC-03**: Tenant vê "última sincronização" e status de saúde do sync
 - [ ] **SYNC-04**: Sistema respeita o rate limit da Tiny por tenant (backoff em `429`, honra `Retry-After`, evita bloqueio de 1h por 5 respostas 429 seguidas)
 
@@ -85,8 +85,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TINY-01 | Phase 3 | Pending |
 | TINY-02 | Phase 3 | Pending |
 | TINY-03 | Phase 3 | Pending |
-| SYNC-01 | Phase 3 | Pending |
-| SYNC-02 | Phase 3 | Pending |
+| SYNC-01 | Phase 3 | Complete |
+| SYNC-02 | Phase 3 | Complete |
 | SYNC-03 | Phase 4 | Pending |
 | SYNC-04 | Phase 3 | Pending |
 | DASH-01 | Phase 4 | Pending |
@@ -95,6 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TENANT-01 | Phase 2 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 13 total
 - Mapped to phases: 13
 - Unmapped: 0 ✓
