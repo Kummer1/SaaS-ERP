@@ -98,7 +98,9 @@ Plans:
   4. Sync runs automatically on a schedule (Supabase Cron — `pg_cron` + `pg_net` — triggering Edge Functions), without requiring manual action from the tenant.
   5. The system respects Tiny's rate limit — applies backoff on `429` responses, honors `Retry-After`, and avoids the 1-hour lockout triggered by 5 consecutive 429s. Rate-limit state persisted in a Postgres table (Edge Functions are stateless between invocations).
 
-**Pre-requisite (architecture decision, 2026-08-01)**: migrate the webhook queue mechanism from `pgmq` (implemented and verified in Phase 1) to a simple Postgres table with polling, per the confirmed architecture decision — see `PROJECT.md` Key Decisions and `docs/02-MODELO-DE-DADOS.md` §5.
+**Queue mechanism**: `pgmq` (implemented in Phase 1, extended in quick-260802-hvz with `pgmq_public.read`/`archive` for crash-safe consumption). A 2026-08-01 decision had planned to migrate this to a simple Postgres table before Phase 3 depended on it; that decision was **reversed on 2026-08-02** after quick-260802-hvz built and proved the real `sync-enqueue`/`sync-worker` pipeline on `pgmq` end-to-end (two tenants, zero cross-contamination) — see `PROJECT.md` Key Decisions and `docs/02-MODELO-DE-DADOS.md` §5. `pgmq` is now the permanent choice; no migration is pending.
+
+**Progress**: `sync-enqueue`/`sync-worker` for the `products` resource are implemented and proven locally (quick-260802-hvz, SYNC-01/SYNC-02 complete) — real Tiny API validation (both OAuth and the products endpoint) still pending a real `client_id`/`client_secret`.
 
 **Plans**: TBD
 

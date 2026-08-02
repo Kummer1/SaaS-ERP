@@ -146,33 +146,17 @@ CREATE INDEX ix_products_tenant_sku          ON products  (tenant_id, sku);
 Quando alguma tabela passar de ~50M linhas (não é o caso no MVP), considere
 particionamento por `tenant_id` (hash) ou por data (`placed_at`, range mensal).
 
-## 5. Fila de webhook (tabela Postgres simples)
+## 5. Fila de sync (`pgmq`)
 
-Decisão confirmada na redefinição de arquitetura: a fila que recebe eventos de
-webhook do Tiny (para processamento assíncrono por uma Edge Function) é uma
-**tabela Postgres simples com polling**, não a extensão `pgmq`.
+Decisão confirmada (revertida em 2026-08-02 — ver histórico abaixo): a fila que
+recebe trabalho de sincronização (produtos, e futuramente outros recursos) usa
+a extensão `pgmq` via o schema wrapper `pgmq_public`, não uma tabela Postgres
+simples.
 
-```sql
-CREATE TABLE webhook_queue (
-    id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    tenant_id    uuid NOT NULL REFERENCES tenants(id),
-    payload      jsonb NOT NULL,
-    status       text NOT NULL DEFAULT 'pending', -- pending|processing|done|failed
-    attempts     int NOT NULL DEFAULT 0,
-    received_at  timestamptz NOT NULL DEFAULT now(),
-    processed_at timestamptz
-);
+- `pgmq.q_sync_work` — fila física, provisionada pela extensão `pgmq`.
+- `pgmq_public.send`/`pop` — wrappers `SECURITY DEFINER`, `service_role`-only, criados na Fase 1.
+- `pgmq_public.read`/`archive` — wrappers adicionados na quick task 260802-hvz para consumo crash-safe (visibility timeout + archive explícito), substituindo `pop` (delete-on-read, sem retry) nos consumidores reais.
 
-CREATE INDEX ix_webhook_queue_status_received
-    ON webhook_queue (status, received_at)
-    WHERE status = 'pending';
-```
+Um produtor (`sync-enqueue`) decide quem precisa sincronizar (via `sync_watermarks`) e chama `pgmq_public.send`. Um consumidor (`sync-worker`) chama `pgmq_public.read` em lotes limitados, processa cada mensagem (busca o recurso na API do Tiny, grava bronze + faz upsert idempotente em silver + avança o watermark) e só então chama `pgmq_public.archive` — se o worker cair no meio, a mensagem volta a ficar visível após o timeout e é reprocessada com segurança (upsert idempotente).
 
-Uma Edge Function de processamento faz polling (`SELECT ... WHERE status = 'pending' ORDER BY received_at LIMIT N FOR UPDATE SKIP LOCKED`), processa cada item (busca o recurso completo na API do Tiny, faz upsert idempotente) e marca `status = 'done'` ou `'failed'` com contagem de tentativas.
-
-**Nota de migração**: a Fase 1 já implementou e verificou um pipeline
-Cron→Fila→Worker usando a extensão `pgmq` (`pgmq.q_sync_work`, schema wrapper
-`pgmq_public`). Essa implementação segue no banco e funcional. A tabela
-`webhook_queue` acima é o alvo da nova decisão arquitetural e **substitui** o uso
-de `pgmq` — a migração de um para o outro é dívida técnica pendente, a ser
-resolvida antes da Fase 3 (sync engine) depender da fila. Ver `.planning/STATE.md`.
+**Histórico da decisão**: a Fase 1 implementou e verificou o pipeline Cron→Fila→Worker usando `pgmq`. Em 2026-08-01, a redefinição de arquitetura trocou essa escolha por uma tabela Postgres simples (`webhook_queue`), declarando `pgmq` como dívida técnica a migrar antes da Fase 3 depender da fila. Essa migração nunca foi feita; em vez disso, a quick task 260802-hvz (2026-08-02) construiu o pipeline real `sync-enqueue`/`sync-worker` diretamente sobre `pgmq` e provou-o ponta a ponta (dois tenants, enqueue, supressão por watermark, isolamento entre tenants, tratamento de 401 — zero cross-contamination). Diante da evidência, a decisão de trocar para tabela simples foi **revertida**: `pgmq` é a escolha definitiva, sem migração pendente. Ver `.planning/quick/260802-hvz-.../260802-hvz-SUMMARY.md`.

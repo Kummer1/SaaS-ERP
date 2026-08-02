@@ -135,7 +135,7 @@ tenant a partir do usuário autenticado.
 | Decisão | Opções consideradas | Escolha | Racional |
 |---|---|---|---|
 | Autenticação da plataforma | Supabase Auth nativo vs. JWT customizado em Edge Function | **Supabase Auth nativo** | Já era a premissa de `PROJECT.md`/`REQUIREMENTS.md`/`ROADMAP.md`; confirmado explicitamente ao redefinir a arquitetura. Sem FastAPI, não há onde hospedar lógica de emissão/verificação de JWT customizado de forma natural — Supabase Auth resolve login/sessão prontos. |
-| Mecanismo de fila do webhook | Tabela Postgres simples com polling vs. extensão `pgmq` | **Tabela Postgres simples com polling** | A Fase 1 havia implementado `pgmq` (extensão + schema wrapper `pgmq_public` + fila `sync_work`, funcionando ponta a ponta e verificado). Ao redefinir a arquitetura, a decisão foi trocar por uma tabela simples. **Isto é dívida técnica declarada**: a implementação `pgmq` da Fase 1 segue no banco e funcional, mas precisa ser substituída por uma tabela de fila antes da Fase 3 (sync engine) depender dela. Ver `.planning/STATE.md` para o item pendente. |
+| Mecanismo de fila do webhook/sync | Tabela Postgres simples com polling vs. extensão `pgmq` | **`pgmq` (revertido para permanente em 2026-08-02)** | A Fase 1 implementou `pgmq` (extensão + schema wrapper `pgmq_public` + fila `sync_work`, funcionando ponta a ponta e verificado). Em 2026-08-01 a decisão havia trocado para tabela simples, mas essa troca nunca foi implementada. Em vez disso, a quick task 260802-hvz construiu o pipeline real `sync-enqueue`/`sync-worker` diretamente sobre `pgmq` (adicionando `pgmq_public.read`/`archive` para consumo crash-safe at-least-once) e provou-o ponta a ponta com dois tenants sem cross-contamination. A decisão de trocar por tabela simples foi **revertida** com o usuário: `pgmq` é a escolha definitiva, sem migração pendente. Ver `.planning/quick/260802-hvz-.../260802-hvz-SUMMARY.md`. |
 
 ## 8. Próximo passo concreto
 
@@ -146,12 +146,13 @@ está implementada e verificada** — ver
 
 Próximos passos, na ordem do roadmap (`.planning/ROADMAP.md`):
 
-1. Migrar o mecanismo de fila de `pgmq` para tabela Postgres simples (dívida
-   técnica da decisão acima) — antes ou no início da Fase 3.
-2. Fase 2: Supabase Auth (signup/login) + RLS fail-closed testado com tenants
+1. Fase 2: Supabase Auth (signup/login) + RLS fail-closed testado com tenants
    fake (cross-tenant access test) antes de qualquer dado real existir.
-3. Fase 3: fluxo OAuth2 completo de conexão com o Tiny + `sync_products` como
-   primeiro recurso sincronizado, idempotente e resiliente a rate limit.
+2. Fase 3: fluxo OAuth2 completo de conexão com o Tiny + `sync_products` como
+   primeiro recurso sincronizado, idempotente e resiliente a rate limit — o
+   pipeline `sync-enqueue`/`sync-worker` sobre `pgmq` já está implementado e
+   provado localmente (quick-260802-hvz); falta validar contra a API real do
+   Tiny.
 4. Fase 4: dashboard consumindo a API de leitura — só depois de ter dado real
    sincronizado, para não desenhar UI no escuro.
 

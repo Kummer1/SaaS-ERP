@@ -23,10 +23,13 @@ endpoint de leitura → dashboard → deploy.
 Ver `.planning/phases/01-infrastructure-connection-foundation/01-VERIFICATION.md`
 para o relatório completo de verificação.
 
-**Dívida técnica declarada**: a fila implementada na Fase 1 usa a extensão
-`pgmq`. A decisão de arquitetura confirmada nesta sessão é usar uma tabela
-Postgres simples com polling em vez disso (ver `01-ARQUITETURA.md` §7 e
-`02-MODELO-DE-DADOS.md` §5) — a migração é pendente, a resolver antes da Fase 3.
+**Fila de sync**: implementada na Fase 1 sobre a extensão `pgmq`. Uma decisão
+anterior (2026-08-01) havia optado por trocar para uma tabela Postgres simples
+com polling, mas essa troca foi **revertida em 2026-08-02** depois que a quick
+task 260802-hvz construiu e provou ponta a ponta o pipeline real
+`sync-enqueue`/`sync-worker` sobre `pgmq` (ver `01-ARQUITETURA.md` §7 e
+`02-MODELO-DE-DADOS.md` §5). `pgmq` é a escolha definitiva; não há migração
+pendente.
 
 ## Fase 2 — Auth & Multi-Tenant Foundation
 
@@ -38,11 +41,11 @@ Postgres simples com polling em vez disso (ver `01-ARQUITETURA.md` §7 e
 
 ## Fase 3 — Tiny OAuth2 Connect + Sync Engine (Produtos)
 
-- [ ] Fluxo OAuth2 completo (authorize → callback → tokens salvos, criptografados
-      via Supabase Vault)
-- [ ] Migração da fila de webhook: `pgmq` → tabela Postgres simples
-- [ ] `sync_products` idempotente, em pedaços (cursor `sync_watermarks`, teto de
-      2s CPU / 150s wall-clock por invocação de Edge Function)
+- [x] Fluxo OAuth2 completo (authorize → callback → tokens salvos, criptografados
+      via Supabase Vault) — mockado e provado localmente (quick-260802-oam); falta validar contra o Tiny real
+- [x] `sync_products` idempotente, via pipeline `sync-enqueue`/`sync-worker` sobre `pgmq`
+      (cursor `sync_watermarks`, teto de 2s CPU / 150s wall-clock por invocação de Edge Function)
+      — provado localmente com dois tenants (quick-260802-hvz); falta validar contra o Tiny real
 - [ ] Rate limiter por tenant com estado persistido em tabela Postgres (Edge
       Function é stateless entre invocações)
 - [ ] Tratamento de 429/401 conforme `03-INTEGRACAO-TINY-ERP.md`
