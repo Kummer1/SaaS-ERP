@@ -1,0 +1,6 @@
+{
+  // Root Deno task config for tests covering all Edge Functions in this project.
+  "tasks": {
+    "test": "deno test --allow-net --allow-env"
+  }
+}
